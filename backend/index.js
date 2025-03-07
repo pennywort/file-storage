@@ -94,13 +94,13 @@ app.get('/api/download/:id', authenticate, (req, res) => {
 
 // Очистка старых файлов каждые 3 часа
 setInterval(() => {
-  db.all("SELECT path FROM files WHERE datetime(upload_time) < datetime('now', '-3 hours')", (err, rows) => {
+  db.all("SELECT path FROM files WHERE datetime(upload_time) < datetime('now', '-15 minutes')", (err, rows) => {
     rows.forEach(row => {
       fs.unlink(row.path, () => {});
     });
-    db.run("DELETE FROM files WHERE datetime(upload_time) < datetime('now', '-3 hours')");
+    db.run("DELETE FROM files WHERE datetime(upload_time) < datetime('now', '-15 minutes')");
   });
-}, 10800000); // 3 часа
+}, 15000);
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
 

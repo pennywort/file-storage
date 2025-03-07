@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>File Storage</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <h1>File Storage</h1>
+    <div id="login">
+      <h2>Login</h2>
+      <input type="text" id="username" placeholder="Username">
+      <input type="password" id="password" placeholder="Password">
+      <button onclick="login()">Login</button>
+    </div>
+    <div id="upload" style="display: none;">
+      <h2>Upload File</h2>
+      <input type="file" id="fileInput">
+      <button onclick="uploadFile()">Upload</button>
+    </div>
+    <div id="fileList" style="display: none;">
+      <h2>Your Files</h2>
+      <button onclick="loadFiles()">Refresh</button>
+      <ul id="files"></ul>
+    </div>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>

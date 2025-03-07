@@ -1,0 +1,106 @@
+require('dotenv').config();
+const express = require('express');
+const fileUpload = require('express-fileupload');
+const sqlite3 = require('sqlite3').verbose();
+const jwt = require('jsonwebtoken');
+const fs = require('fs');
+const path = require('path');
+
+const app = express();
+const PORT = 3001;
+const SECRET_KEY = process.env.SECRET_KEY; // Используем SECRET_KEY из .env
+const UPLOAD_DIR = path.join(__dirname, 'storage');
+
+// Проверка и создание папки storage, если её нет
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+// Инициализация БД
+const db = new sqlite3.Database('./database.db');
+
+db.serialize(() => {
+  db.run("CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username TEXT, password TEXT)");
+  db.run("CREATE TABLE IF NOT EXISTS files (id INTEGER PRIMARY KEY, filename TEXT, path TEXT, upload_time DATETIME, user_id INTEGER)");
+});
+
+app.use(express.json());
+app.use(fileUpload());
+
+// Middleware авторизации
+const authenticate = (req, res, next) => {
+  const token = req.headers.authorization?.split(' ')[1];
+  if (!token) return res.status(401).send('Access denied');
+
+  try {
+    req.user = jwt.verify(token, SECRET_KEY);
+    next();
+  } catch (err) {
+    res.status(400).send('Invalid token');
+  }
+};
+
+// Роуты авторизации
+app.post('/api/login', (req, res) => {
+  const { username, password } = req.body;
+  // Проверка пользователя (добавьте своих пользователей в БД)
+  db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, user) => {
+    if (err || !user) return res.status(401).send('Invalid credentials');
+    
+    const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY);
+    res.json({ token });
+  });
+});
+
+// Загрузка файла
+app.post('/api/upload', authenticate, (req, res) => {
+  if (!req.files || !req.files.file) return res.status(400).send('No files uploaded');
+  
+  const file = req.files.file;
+  const filename = `${Date.now()}_${file.name}`;
+  const filePath = path.join(UPLOAD_DIR, filename);
+
+  file.mv(filePath, (err) => {
+    if (err) return res.status(500).send(err);
+    
+    db.run("INSERT INTO files (filename, path, upload_time, user_id) VALUES (?, ?, datetime('now'), ?)",
+      [filename, filePath, req.user.id]);
+    
+    res.send('File uploaded');
+  });
+});
+
+// Получение списка файлов
+app.get('/api/files', authenticate, (req, res) => {
+  db.all("SELECT id, filename, upload_time FROM files WHERE user_id = ?", [req.user.id], (err, rows) => {
+    if (err) return res.status(500).send(err);
+    res.json(rows);
+  });
+});
+
+app.get('/api/download/:id', authenticate, (req, res) => {
+  db.get("SELECT filename, path FROM files WHERE id = ? AND user_id = ?", [req.params.id, req.user.id], (err, file) => {
+    if (err || !file) return res.status(404).send('File not found');
+
+    // Отправляем файл с оригинальным именем
+    res.download(file.path, file.filename, (err) => {
+      if (err) {
+        console.error('Error downloading file:', err);
+        res.status(500).send('Error downloading file');
+      }
+    });
+  });
+});
+
+// Очистка старых файлов каждые 3 часа
+setInterval(() => {
+  db.all("SELECT path FROM files WHERE datetime(upload_time) < datetime('now', '-3 hours')", (err, rows) => {
+    rows.forEach(row => {
+      fs.unlink(row.path, () => {});
+    });
+    db.run("DELETE FROM files WHERE datetime(upload_time) < datetime('now', '-3 hours')");
+  });
+}, 10800000); // 3 часа
+
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+

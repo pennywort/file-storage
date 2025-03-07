@@ -51,11 +51,13 @@ app.post('/api/login', (req, res) => {
 
     const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY);
 
-    // Устанавливаем куку с токеном
+    // Устанавливаем куку
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Используем secure в production
+      secure: process.env.NODE_ENV === 'production', // Используем Secure в production
       maxAge: 30 * 24 * 60 * 60 * 1000, // Кука будет храниться 30 дней
+      sameSite: 'Lax', // Указываем SameSite
+      path: '/', // Указываем путь, чтобы кука была доступна для всех маршрутов
     });
 
     res.send('Login successful');

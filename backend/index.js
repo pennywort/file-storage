@@ -7,10 +7,10 @@ const fs = require('fs');
 const path = require('path');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
+const app = express();
 
 app.use(cookieParser());
 
-const app = express();
 const PORT = 3001;
 const SECRET_KEY = process.env.SECRET_KEY; // Используем SECRET_KEY из .env
 const UPLOAD_DIR = path.join(__dirname, 'storage');

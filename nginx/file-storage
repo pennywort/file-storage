@@ -15,4 +15,5 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cookie_path / "/; HttpOnly; Secure; SameSite=None";
     }
+
 }

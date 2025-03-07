@@ -6,6 +6,8 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
 const cookieParser = require('cookie-parser');
+const cors = require('cors');
+
 app.use(cookieParser());
 
 const app = express();
@@ -54,7 +56,7 @@ app.post('/api/login', (req, res) => {
     // Устанавливаем куку
     res.cookie('token', token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production', // Используем Secure в production
+      secure: false, //process.env.NODE_ENV === 'production', // Используем Secure в production
       maxAge: 30 * 24 * 60 * 60 * 1000, // Кука будет храниться 30 дней
       sameSite: 'Lax', // Указываем SameSite
       path: '/', // Указываем путь, чтобы кука была доступна для всех маршрутов
@@ -110,6 +112,12 @@ app.post('/api/logout', (req, res) => {
   res.clearCookie('token');
   res.send('Logged out');
 });
+
+
+app.use(cors({
+  origin: 'http://92.118.10.144', // Укажите домен вашего фронтенда
+  credentials: true, // Разрешаем передачу кук
+}));
 
 // Очистка старых файлов каждые 3 часа
 setInterval(() => {

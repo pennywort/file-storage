@@ -5,6 +5,8 @@ const sqlite3 = require('sqlite3').verbose();
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 
 const app = express();
 const PORT = 3001;
@@ -29,7 +31,7 @@ app.use(fileUpload());
 
 // Middleware авторизации
 const authenticate = (req, res, next) => {
-  const token = req.headers.authorization?.split(' ')[1];
+  const token = req.cookies.token;
   if (!token) return res.status(401).send('Access denied');
 
   try {
@@ -40,17 +42,26 @@ const authenticate = (req, res, next) => {
   }
 };
 
+
 // Роуты авторизации
 app.post('/api/login', (req, res) => {
   const { username, password } = req.body;
-  // Проверка пользователя (добавьте своих пользователей в БД)
   db.get("SELECT * FROM users WHERE username = ? AND password = ?", [username, password], (err, user) => {
     if (err || !user) return res.status(401).send('Invalid credentials');
-    
+
     const token = jwt.sign({ id: user.id, username: user.username }, SECRET_KEY);
-    res.json({ token });
+
+    // Устанавливаем куку с токеном
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production', // Используем secure в production
+      maxAge: 30 * 24 * 60 * 60 * 1000, // Кука будет храниться 30 дней
+    });
+
+    res.send('Login successful');
   });
 });
+
 
 // Загрузка файла
 app.post('/api/upload', authenticate, (req, res) => {
@@ -90,6 +101,12 @@ app.get('/api/download/:id', authenticate, (req, res) => {
       }
     });
   });
+});
+
+// Выход из системы (очистка куки)
+app.post('/api/logout', (req, res) => {
+  res.clearCookie('token');
+  res.send('Logged out');
 });
 
 // Очистка старых файлов каждые 3 часа

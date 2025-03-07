@@ -1,5 +1,3 @@
-let token = null;
-
 async function login() {
   const username = document.getElementById('username').value;
   const password = document.getElementById('password').value;
@@ -7,12 +5,11 @@ async function login() {
   const response = await fetch('/api/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include', // Включаем отправку кук
     body: JSON.stringify({ username, password })
   });
 
   if (response.ok) {
-    const data = await response.json();
-    token = data.token;
     document.getElementById('login').style.display = 'none';
     document.getElementById('upload').style.display = 'block';
     document.getElementById('fileList').style.display = 'block';
@@ -36,7 +33,7 @@ async function uploadFile() {
 
   const response = await fetch('/api/upload', {
     method: 'POST',
-    headers: { 'Authorization': `Bearer ${token}` },
+    credentials: 'include', // Включаем отправку кук
     body: formData
   });
 
@@ -50,7 +47,7 @@ async function uploadFile() {
 
 async function loadFiles() {
   const response = await fetch('/api/files', {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include', // Включаем отправку кук
   });
 
   if (response.ok) {
@@ -68,22 +65,37 @@ async function loadFiles() {
 
 async function downloadFile(fileId, filename) {
   const response = await fetch(`/api/download/${fileId}`, {
-    headers: { 'Authorization': `Bearer ${token}` }
+    credentials: 'include', // Включаем отправку кук
   });
 
   if (response.ok) {
-    // Получаем файл как бинарный объект
     const blob = await response.blob();
-    // Создаём временную ссылку для скачивания
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = filename; // Используем оригинальное имя файла
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    window.URL.revokeObjectURL(url); // Освобождаем память
+    window.URL.revokeObjectURL(url);
   } else {
     alert('Failed to download file');
+  }
+}
+
+// Функция для выхода из системы
+async function logout() {
+  const response = await fetch('/api/logout', {
+    method: 'POST',
+    credentials: 'include', // Включаем отправку кук
+  });
+
+  if (response.ok) {
+    document.getElementById('login').style.display = 'block';
+    document.getElementById('upload').style.display = 'none';
+    document.getElementById('fileList').style.display = 'none';
+    alert('Logged out');
+  } else {
+    alert('Logout failed');
   }
 }

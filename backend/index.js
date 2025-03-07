@@ -58,7 +58,7 @@ app.post('/api/login', (req, res) => {
       httpOnly: true,
       secure: false, //process.env.NODE_ENV === 'production', // Используем Secure в production
       maxAge: 30 * 24 * 60 * 60 * 1000, // Кука будет храниться 30 дней
-      sameSite: 'None', // Указываем SameSite
+      sameSite: 'Lax', // Указываем SameSite
       path: '/', // Указываем путь, чтобы кука была доступна для всех маршрутов
     });
 

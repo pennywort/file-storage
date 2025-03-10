@@ -38,6 +38,13 @@ const authenticate = (req, res, next) => {
 
   try {
     req.user = jwt.verify(token, SECRET_KEY);
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: false, //process.env.NODE_ENV === 'production', // Используем Secure в production
+      maxAge: 30 * 24 * 60 * 60 * 1000, // Кука будет храниться 30 дней
+      sameSite: 'Lax', // Указываем SameSite
+      path: '/', // Указываем путь, чтобы кука была доступна для всех маршрутов
+    });
     next();
   } catch (err) {
     res.status(400).send('Invalid token');
@@ -89,14 +96,6 @@ app.post('/api/upload', authenticate, (req, res) => {
 app.get('/api/files', authenticate, (req, res) => {
   db.all("SELECT id, filename, upload_time FROM files WHERE user_id = ?", [req.user.id], (err, rows) => {
     if (err) return res.status(500).send(err);
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: false, //process.env.NODE_ENV === 'production', // Используем Secure в production
-      maxAge: 30 * 24 * 60 * 60 * 1000, // Кука будет храниться 30 дней
-      sameSite: 'Lax', // Указываем SameSite
-      path: '/', // Указываем путь, чтобы кука была доступна для всех маршрутов
-    });
-
     res.json(rows);
   });
 });

@@ -9,6 +9,11 @@ const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const app = express();
 
+
+app.use(cors({
+  origin: 'http://92.118.10.144', // Укажите домен вашего фронтенда
+  credentials: true, // Разрешаем передачу кук
+}));
 app.use(cookieParser());
 
 const PORT = 3001;
@@ -38,13 +43,13 @@ const authenticate = (req, res, next) => {
 
   try {
     req.user = jwt.verify(token, SECRET_KEY);
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: false, //process.env.NODE_ENV === 'production', // Используем Secure в production
-      maxAge: 30 * 24 * 60 * 60 * 1000, // Кука будет храниться 30 дней
-      sameSite: 'Lax', // Указываем SameSite
-      path: '/', // Указываем путь, чтобы кука была доступна для всех маршрутов
-    });
+    // res.cookie('token', token, {
+    //   httpOnly: true,
+    //   secure: false, //process.env.NODE_ENV === 'production', // Используем Secure в production
+    //   maxAge: 30 * 24 * 60 * 60 * 1000, // Кука будет храниться 30 дней
+    //   sameSite: 'Lax', // Указываем SameSite
+    //   path: '/', // Указываем путь, чтобы кука была доступна для всех маршрутов
+    // });
     next();
   } catch (err) {
     res.status(400).send('Invalid token');
@@ -119,12 +124,6 @@ app.post('/api/logout', (req, res) => {
   res.clearCookie('token');
   res.send('Logged out');
 });
-
-
-app.use(cors({
-  origin: 'http://92.118.10.144', // Укажите домен вашего фронтенда
-  credentials: true, // Разрешаем передачу кук
-}));
 
 // Очистка старых файлов каждые 3 часа
 setInterval(() => {

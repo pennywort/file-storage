@@ -4,7 +4,7 @@ server {
 
     # Редирект с корня на /file-storage
     location = / {
-        return 302 /file-storage;
+        return 302 /file-storage/;
     }
 
     location /file-storage/ {

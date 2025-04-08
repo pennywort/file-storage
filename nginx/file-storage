@@ -2,11 +2,18 @@ server {
     listen 80;
     server_name 92.118.10.144;
 
-    location / {
-        root /var/www/file-storage/frontend;
-        try_files $uri $uri/ /index.html;
+    # Редирект с корня на /file-storage
+    location = / {
+        return 302 /file-storage;
     }
 
+    # Отдача фронта из /file-storage
+    location /file-storage/ {
+        root /var/www/file-storage/frontend;
+        try_files $uri $uri/ /file-storage/index.html;
+    }
+
+    # Прокси API
     location /api/ {
         proxy_pass http://localhost:3001;
         proxy_set_header Host $host;

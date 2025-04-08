@@ -2,7 +2,6 @@ server {
     listen 80;
     server_name 92.118.10.144 pocoapoco.duckdns.org tools-adventures-mart-foods.trycloudflare.com;
 
-    # Редирект с корня на /file-storage
     location = / {
         return 302 /file-storage/;
     }

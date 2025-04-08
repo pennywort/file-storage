@@ -1,18 +1,20 @@
 server {
-    listen 80;
-    server_name 92.118.10.144 pocoapoco.duckdns.org disks-ant-ment-deserve.trycloudflare.com;
+    listen 80 default_server;
+    server_name _;
 
-    # Редирект с корня на /file-storage
+    # Редирект с корня на /file-storage/
     location = / {
+        add_header X-Debug "root-redirect";
         return 302 /file-storage/;
     }
 
+    # Отдача фронта
     location /file-storage/ {
         alias /var/www/file-storage/frontend/;
         try_files $uri $uri/ /index.html;
     }
 
-    # Прокси API
+    # Прокси для API
     location /api/ {
         proxy_pass http://localhost:3001;
         proxy_set_header Host $host;

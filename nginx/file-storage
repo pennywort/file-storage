@@ -7,10 +7,9 @@ server {
         return 302 /file-storage;
     }
 
-    # Отдача фронта из /file-storage
     location /file-storage/ {
-        root /var/www/file-storage/frontend;
-        try_files $uri $uri/ /file-storage/index.html;
+        alias /var/www/file-storage/frontend/;
+        try_files $uri $uri/ /index.html;
     }
 
     # Прокси API
